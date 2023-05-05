@@ -8,7 +8,7 @@ import { useTimer } from "../hooks/useTimer";
 import { giveMinutesAndSecondsFromSeconds } from "../utils";
 import useAudio from "../hooks/useAudio";
 import Wave from "react-wavify";
-import AudioUtility from "../libs/audioHelper";
+import Audio from "./Audio";
 
 export default function SoundRecorder({ timeLimit = 60 }) {
   const [showApp, setShowApp] = useState(false);
@@ -19,7 +19,8 @@ export default function SoundRecorder({ timeLimit = 60 }) {
     status: recordingVoice,
     type: "INCR",
   });
-  const { permission, audio, startRecording, stopRecording } = useAudio();
+  const { permission, startRecording, stopRecording, audio, voiceIntensity } =
+    useAudio();
   const { minutes, seconds } = giveMinutesAndSecondsFromSeconds(time);
   const { minutes: min, seconds: sec } =
     giveMinutesAndSecondsFromSeconds(timeLimit);
@@ -38,11 +39,7 @@ export default function SoundRecorder({ timeLimit = 60 }) {
       restartTimer();
     }
   };
-  const analyzer = AudioUtility.getAnalyser();
-  analyzer.fftSize = 256;
-  const bufferLength = analyzer.frequencyBinCount;
-  const dataArray = new Uint8Array(bufferLength);
-  console.log({ bufferLength, dataArray });
+
   return (
     <div className="flex flex-col border border-blue-900 mx-auto mt-20 gap-10 p-6 pb-10 bg-[#0e0931] text-white rounded-2xl max-w-[500px] ">
       {showApp ? (
@@ -99,14 +96,15 @@ export default function SoundRecorder({ timeLimit = 60 }) {
                 paused={false}
                 options={{
                   height: 20,
-                  amplitude: 50,
+                  amplitude: voiceIntensity,
                   speed: 2,
                   points: 1,
                 }}
               />
             ) : (
-              <div>
+              <div className="flex justify-between w-full">
                 <FaRegPlayCircle size={40} className="text-purple-700" />
+                {audio && <Audio audioFile={audio} />}
               </div>
             )}
           </div>

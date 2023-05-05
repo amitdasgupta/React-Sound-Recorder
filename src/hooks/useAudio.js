@@ -7,6 +7,7 @@ export default function useAudio() {
   const [stream, setStream] = useState(null);
   const [audioChunks, setAudioChunks] = useState([]);
   const [audio, setAudio] = useState(null);
+  const [voiceIntensity, setVoiceIntensity] = useState(0);
 
   const getMicrophonePermission = async () => {
     if ("MediaRecorder" in window) {
@@ -14,10 +15,27 @@ export default function useAudio() {
         const streamData = await navigator.mediaDevices.getUserMedia({
           audio: true,
         });
+        const audioContext = new AudioContext();
+        const analyser = audioContext.createAnalyser();
+        const microphone = audioContext.createMediaStreamSource(streamData);
+        const scriptProcessor = audioContext.createScriptProcessor(2048, 1, 1);
+
+        analyser.smoothingTimeConstant = 0.8;
+        analyser.fftSize = 1024;
+
+        microphone.connect(analyser);
+        analyser.connect(scriptProcessor);
+        scriptProcessor.connect(audioContext.destination);
+        scriptProcessor.onaudioprocess = function () {
+          const array = new Uint8Array(analyser.frequencyBinCount);
+          analyser.getByteFrequencyData(array);
+          const arraySum = array.reduce((a, value) => a + value, 0);
+          const average = arraySum / array.length;
+          setVoiceIntensity(average);
+          // colorPids(average);
+        };
         setPermission(true);
         setStream(streamData);
-
-        return true;
       } catch (err) {
         alert(err.message);
       }
@@ -47,6 +65,12 @@ export default function useAudio() {
     setRecordingStatus("inactive");
     //stops the recording instance
     mediaRecorder.current.stop();
+    stream
+      .getTracks() // get all tracks from the MediaStream
+      .forEach((track) => {
+        track.stop();
+        track.enabled = false;
+      });
     mediaRecorder.current.onstop = () => {
       //creates a blob file from the audiochunks data
       const audioBlob = new Blob(audioChunks, { type: mimeType });
@@ -55,11 +79,12 @@ export default function useAudio() {
       setAudio(audioUrl);
       setAudioChunks([]);
     };
-  }, [audioChunks]);
+  }, [audioChunks, stream]);
 
   useEffect(() => {
     getMicrophonePermission();
   }, []);
+
   return {
     getMicrophonePermission,
     stream,
@@ -67,5 +92,7 @@ export default function useAudio() {
     startRecording,
     stopRecording,
     audio,
+    voiceIntensity,
+    recordingStatus,
   };
 }
