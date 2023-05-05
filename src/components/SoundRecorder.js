@@ -29,8 +29,9 @@ export default function SoundRecorder({ timeLimit = 60 }) {
     if (time >= timeLimit) {
       setRecordingVoice(false);
       stopRecording();
+      stopTimer();
     }
-  }, [time, setRecordingVoice, timeLimit, stopRecording]);
+  }, [time, setRecordingVoice, timeLimit, stopRecording, stopTimer]);
 
   useEffect(() => {
     if (audioRef.current && time >= audioRef.current?.duration) {
@@ -69,7 +70,11 @@ export default function SoundRecorder({ timeLimit = 60 }) {
           <div className="flex items-center justify-between gap-2">
             <div className="flex flex-col gap-2 items-start">
               <div className="text-gray-400 cursor-pointer text-3xl">
-                {recordingVoice ? "Recording" : "Recording paused"}
+                {recordingVoice
+                  ? "Recording"
+                  : playing
+                  ? "Playing"
+                  : "Recording paused"}
               </div>
               <div>
                 <span className="text-4xl font-medium">{`${minutes.toLocaleString(
@@ -125,19 +130,16 @@ export default function SoundRecorder({ timeLimit = 60 }) {
               />
             ) : (
               <div className="flex justify-between w-full">
-                {playing ? (
-                  <FaPauseCircle
-                    size={40}
-                    className="text-purple-700"
-                    onClick={stopAudioPlay}
-                  />
-                ) : (
-                  <FaRegPlayCircle
-                    size={40}
-                    className="text-purple-700"
-                    onClick={playRecording}
-                  />
-                )}
+                <div
+                  className="cursor-pointer"
+                  onClick={playing ? stopAudioPlay : playRecording}
+                >
+                  {playing ? (
+                    <FaPauseCircle size={40} className="text-purple-700" />
+                  ) : (
+                    <FaRegPlayCircle size={40} className="text-purple-700" />
+                  )}
+                </div>
                 {audio && (
                   <Audio
                     className="invisible"

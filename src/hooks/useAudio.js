@@ -69,7 +69,7 @@ export default function useAudio() {
 
   const stopRecording = useCallback(() => {
     setRecordingStatus("inactive");
-    mediaRecorder.stop();
+    mediaRecorder?.stop();
     stream.getTracks().forEach((track) => {
       track.stop();
       track.enabled = false;
