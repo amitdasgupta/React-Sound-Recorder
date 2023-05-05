@@ -19,8 +19,7 @@ export default function SoundRecorder({ timeLimit = 60 }) {
     status: recordingVoice,
     type: "INCR",
   });
-  const { permission, startRecording, stopRecording, audio, voiceIntensity } =
-    useAudio();
+  const { startRecording, stopRecording, audio, voiceIntensity } = useAudio();
   const { minutes, seconds } = giveMinutesAndSecondsFromSeconds(time);
   const { minutes: min, seconds: sec } =
     giveMinutesAndSecondsFromSeconds(timeLimit);
@@ -32,14 +31,11 @@ export default function SoundRecorder({ timeLimit = 60 }) {
   }, [time, setRecordingVoice, timeLimit, stopRecording]);
 
   const startApp = () => {
-    if (permission) {
-      setShowApp(true);
-      startRecording();
-      setRecordingVoice(true);
-      restartTimer();
-    }
+    setShowApp(true);
+    startRecording();
+    setRecordingVoice(true);
+    restartTimer();
   };
-
   return (
     <div className="flex flex-col border border-blue-900 mx-auto mt-20 gap-10 p-6 pb-10 bg-[#0e0931] text-white rounded-2xl max-w-[500px] ">
       {showApp ? (
