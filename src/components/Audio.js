@@ -1,11 +1,11 @@
-import { useRef } from "react";
+import { forwardRef } from "react";
 
-export default function Audio({ audioFile }) {
-  const audioRef = useRef(null);
+function Audio({ className, audioFile }, ref) {
   return (
     <div>
-      <audio ref={audioRef} src={audioFile} controls></audio>
-      <div onClick={() => audioRef?.current?.stop()}>Stop Audio</div>
+      <audio className={className} ref={ref} src={audioFile} controls></audio>
     </div>
   );
 }
+
+export default forwardRef(Audio);

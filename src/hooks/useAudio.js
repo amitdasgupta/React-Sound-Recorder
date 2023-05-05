@@ -77,7 +77,6 @@ export default function useAudio() {
   }, [stream, mediaRecorder]);
 
   useEffect(() => {
-    console.log({ audioChunks, recordingStatus });
     const callback = (audioChunks) => () => {
       //creates a blob file from the audiochunks data
       const audioBlob = new Blob(audioChunks, { type: mimeType });

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   FaRegPlayCircle,
   FaPauseCircle,
@@ -13,8 +13,10 @@ import Audio from "./Audio";
 export default function SoundRecorder({ timeLimit = 60 }) {
   const [showApp, setShowApp] = useState(false);
   const [recordingVoice, setRecordingVoice] = useState(false);
+  const audioRef = useRef(null);
+  const [playing, setPlaying] = useState(null);
   const someVoiceIsRecorded = false;
-  const { time, stopTimer, restartTimer } = useTimer({
+  const { time, stopTimer, startTimer, resetTimer } = useTimer({
     value: timeLimit,
     status: recordingVoice,
     type: "INCR",
@@ -30,12 +32,36 @@ export default function SoundRecorder({ timeLimit = 60 }) {
     }
   }, [time, setRecordingVoice, timeLimit, stopRecording]);
 
+  useEffect(() => {
+    if (audioRef.current && time >= audioRef.current?.duration) {
+      setPlaying(null);
+      stopTimer();
+      resetTimer();
+    }
+  }, [time, setPlaying, stopTimer, resetTimer]);
+
   const startApp = () => {
     setShowApp(true);
     startRecording();
     setRecordingVoice(true);
-    restartTimer();
+    startTimer();
   };
+
+  const playRecording = () => {
+    if (playing === null) {
+      resetTimer();
+    }
+    startTimer();
+    audioRef?.current?.play();
+    setPlaying(true);
+  };
+
+  const stopAudioPlay = () => {
+    audioRef?.current?.pause();
+    setPlaying(false);
+    stopTimer();
+  };
+
   return (
     <div className="flex flex-col border border-blue-900 mx-auto mt-20 gap-10 p-6 pb-10 bg-[#0e0931] text-white rounded-2xl max-w-[500px] ">
       {showApp ? (
@@ -99,8 +125,26 @@ export default function SoundRecorder({ timeLimit = 60 }) {
               />
             ) : (
               <div className="flex justify-between w-full">
-                <FaRegPlayCircle size={40} className="text-purple-700" />
-                {audio && <Audio audioFile={audio} />}
+                {playing ? (
+                  <FaPauseCircle
+                    size={40}
+                    className="text-purple-700"
+                    onClick={stopAudioPlay}
+                  />
+                ) : (
+                  <FaRegPlayCircle
+                    size={40}
+                    className="text-purple-700"
+                    onClick={playRecording}
+                  />
+                )}
+                {audio && (
+                  <Audio
+                    className="invisible"
+                    audioFile={audio}
+                    ref={audioRef}
+                  />
+                )}
               </div>
             )}
           </div>
