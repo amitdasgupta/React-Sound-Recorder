@@ -9,13 +9,15 @@ import { giveMinutesAndSecondsFromSeconds } from "../utils";
 import useAudio from "../hooks/useAudio";
 import Wave from "react-wavify";
 import Audio from "./Audio";
+import ProgressBar from "./ProgressBar";
 
 export default function SoundRecorder({ timeLimit = 60 }) {
   const [showApp, setShowApp] = useState(false);
   const [recordingVoice, setRecordingVoice] = useState(false);
+  const [audioTime, setAudioTime] = useState(0);
   const audioRef = useRef(null);
   const [playing, setPlaying] = useState(null);
-  const someVoiceIsRecorded = false;
+  const [someVoiceIsRecorded, setSomeVoiceIsRecorded] = useState(false);
   const { time, stopTimer, startTimer, resetTimer } = useTimer({
     value: timeLimit,
     status: recordingVoice,
@@ -25,6 +27,8 @@ export default function SoundRecorder({ timeLimit = 60 }) {
   const { minutes, seconds } = giveMinutesAndSecondsFromSeconds(time);
   const { minutes: min, seconds: sec } =
     giveMinutesAndSecondsFromSeconds(timeLimit);
+  const { minutes: recordingMin, seconds: recordingSec } =
+    giveMinutesAndSecondsFromSeconds(audioTime);
   useEffect(() => {
     if (time >= timeLimit) {
       setRecordingVoice(false);
@@ -34,18 +38,22 @@ export default function SoundRecorder({ timeLimit = 60 }) {
   }, [time, setRecordingVoice, timeLimit, stopRecording, stopTimer]);
 
   useEffect(() => {
-    if (audioRef.current && time >= audioRef.current?.duration) {
-      setPlaying(null);
-      stopTimer();
-      resetTimer();
+    if (audioRef.current && time >= audioTime) {
+      setTimeout(() => {
+        setPlaying(null);
+        stopTimer();
+        resetTimer();
+      }, 1000);
     }
-  }, [time, setPlaying, stopTimer, resetTimer]);
+  }, [time, setPlaying, stopTimer, resetTimer, audioTime]);
 
-  const startApp = () => {
-    setShowApp(true);
-    startRecording();
-    setRecordingVoice(true);
-    startTimer();
+  const startApp = async () => {
+    const permision = await startRecording();
+    if (permision) {
+      setShowApp(true);
+      setRecordingVoice(true);
+      startTimer();
+    }
   };
 
   const playRecording = () => {
@@ -83,12 +91,17 @@ export default function SoundRecorder({ timeLimit = 60 }) {
                 )}:${seconds.toLocaleString("en-US", {
                   minimumIntegerDigits: 2,
                 })} `}</span>
-                <span className="text-2xl text-gray-400">{`/ ${min.toLocaleString(
-                  "en-US",
-                  { minimumIntegerDigits: 2 }
-                )}:${sec.toLocaleString("en-US", {
+                <span className="text-2xl text-gray-400">{`/ ${(someVoiceIsRecorded
+                  ? recordingMin
+                  : min
+                ).toLocaleString("en-US", {
                   minimumIntegerDigits: 2,
-                })}`}</span>
+                })}:${(someVoiceIsRecorded ? recordingSec : sec).toLocaleString(
+                  "en-US",
+                  {
+                    minimumIntegerDigits: 2,
+                  }
+                )}`}</span>
               </div>
             </div>
             <div className="flex gap-2 items-center">
@@ -101,6 +114,8 @@ export default function SoundRecorder({ timeLimit = 60 }) {
                       setRecordingVoice(false);
                       stopRecording();
                       stopTimer();
+                      setAudioTime(time);
+                      setSomeVoiceIsRecorded(true);
                     }}
                   />
                 )}
@@ -111,6 +126,11 @@ export default function SoundRecorder({ timeLimit = 60 }) {
                     ? "bg-purple-700 cursor-pointer"
                     : "bg-gray-800 cursor-not-allowed"
                 } rounded-md  bg-purple-700px-4 py-2  `}
+                onClick={() => {
+                  if (someVoiceIsRecorded) {
+                    alert("Sent audio to server");
+                  }
+                }}
               >
                 Send
               </div>
@@ -129,7 +149,7 @@ export default function SoundRecorder({ timeLimit = 60 }) {
                 }}
               />
             ) : (
-              <div className="flex justify-between w-full">
+              <div className="flex justify-between w-full items-center">
                 <div
                   className="cursor-pointer"
                   onClick={playing ? stopAudioPlay : playRecording}
@@ -141,15 +161,28 @@ export default function SoundRecorder({ timeLimit = 60 }) {
                   )}
                 </div>
                 {audio && (
-                  <Audio
-                    className="invisible"
-                    audioFile={audio}
-                    ref={audioRef}
-                  />
+                  <>
+                    <div className="w-[80%] h-1">
+                      <ProgressBar
+                        className="h-1 w-full"
+                        time={playing !== null ? time : 0}
+                        totalTime={audioTime}
+                      />
+                    </div>
+                  </>
                 )}
               </div>
             )}
           </div>
+          {audio && (
+            <>
+              <Audio
+                className="invisible h-0"
+                audioFile={audio}
+                ref={audioRef}
+              />
+            </>
+          )}
         </>
       ) : (
         <div onClick={startApp} className="cursor-pointer mx-auto">

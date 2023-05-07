@@ -59,6 +59,7 @@ export default function useAudio() {
         const media = new MediaRecorder(streamData, { type: mimeType });
         setMediaRecorder(media);
         setStream(streamData);
+        return true;
       } catch (err) {
         alert(err.message);
       }

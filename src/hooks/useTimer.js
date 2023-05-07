@@ -1,13 +1,21 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export function useTimer({ value = 30, type = "INCR" }) {
   const [time, setTime] = useState(0);
   const [active, setActive] = useState(false);
+  const counter = useRef(0);
+
   useEffect(() => {
     const timerId = setInterval(() => {
       if (!active) {
         clearInterval(timerId);
         return;
+      }
+      counter.current += 10;
+      if (counter.current < 1000) {
+        return;
+      } else {
+        counter.current = 0;
       }
       if (type === "INCR") {
         if (time >= value) {
@@ -22,7 +30,7 @@ export function useTimer({ value = 30, type = "INCR" }) {
         }
         setTime((time) => time - 1);
       }
-    }, 1000);
+    }, 10);
     return () => {
       clearInterval(timerId);
     };
